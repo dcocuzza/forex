@@ -1,0 +1,113 @@
+version: '3.7'
+services:
+
+    zookeeper:
+        build: 
+            context: kafka
+            dockerfile: Dockerfile
+        container_name: kafkaZK
+        environment:
+            - KAFKA_ACTION=start-zk
+        networks: 
+            tap:
+                ipv4_address: 10.0.100.22
+
+
+    kafkaserver:
+        build: 
+            context: kafka
+            dockerfile: Dockerfile
+        container_name: kafkaServer
+        environment:
+            - KAFKA_ACTION=start-kafka
+            #- KAFKA_HEAP_OPTS=-Xmx256M
+        ports:
+            - 9092:9092
+        networks: 
+            tap:
+                ipv4_address: 10.0.100.23
+        depends_on:
+            - zookeeper
+
+
+    kafkatopic:
+        build: 
+            context: kafka
+            dockerfile: Dockerfile
+        container_name: kafkaTopic
+        environment:
+            - KAFKA_ACTION=create-topic
+            - KAFKA_PARTITION=1
+            - KAFKA_TOPIC=eurusd
+        networks: 
+            tap:
+        depends_on:
+            - zookeeper
+            - kafkaserver
+
+
+#    kafka-ui:
+#        image: provectuslabs/kafka-ui:latest
+#        container_name: kafkaWebUI
+#        environment:
+#            - KAFKA_CLUSTERS_0_NAME=local
+#            - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafkaServer:9092
+#        ports: 
+#            - 8080:8080
+#        networks: 
+#            - tap
+#        depends_on:
+#            - kafkaserver
+
+
+    logstash:
+        build: 
+            context: logstash
+            dockerfile: Dockerfile
+        networks: 
+            - tap
+        environment:
+            XPACK_MONITORING_ENABLED: "false"
+        ports:
+            - 9090:9090
+        volumes:
+            - ./logstash/logstash_forex.conf:/usr/share/logstash/pipeline/logstash.conf
+        depends_on:
+            kafkatopic:
+                condition: service_completed_successfully
+
+
+    spark:
+        build: 
+            context: spark
+            dockerfile: Dockerfile
+        container_name: spark
+        #environment: 
+        #    - SPARK_ACTION=spark-submit-python
+        ports:
+            - 4040:4040
+        networks:
+          - tap
+        #command: codice.py org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.0
+        restart: on-failure  
+        depends_on:
+          - zookeeper
+          - kafkaserver
+        deploy:
+          resources:
+            limits:
+              cpus: '4.0'
+              memory: 4g
+
+
+
+networks:
+    tap:
+        name: tap
+        driver: bridge
+        ipam:
+            config:
+                - subnet: 10.0.100.1/24
+
+
+#     export KAFKA_HEAP_OPTS="-Xmx1G -Xms1G"
