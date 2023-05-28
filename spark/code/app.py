@@ -22,12 +22,12 @@ def linear_regression():
   lr = LinearRegression(featuresCol="features", labelCol="exchange_rate")
   lr_model = lr.fit(prepared_data)
 
-
   print("Coefficients: {}".format(lr_model.coefficients))
   print("Intercept: {}".format(lr_model.intercept))
 
   predictions = lr_model.transform(prepared_data)
-  predictions.show()
+  #predictions.show()
+  return predictions
 
 def elaborate(batch_df: DataFrame, batch_id: int):
 
@@ -49,7 +49,16 @@ def elaborate(batch_df: DataFrame, batch_id: int):
     #print(exchange_rate)
 
     exchange_rates.append(exchange_rate)
-    linear_regression()
+    predictions = linear_regression()
+    predictions.show()
+
+    prediction_values = predictions.select("exchange_rate", "prediction").collect()
+    for row in prediction_values:
+      exchange_rate = row["exchange_rate"]
+      prediction = row["prediction"]
+      print("Exchange Rate: {}, Prediction: {}".format(exchange_rate, prediction))
+      print("Valore intero: ", prediction)
+
 
       
   
