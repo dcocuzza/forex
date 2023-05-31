@@ -1,10 +1,10 @@
 from __future__ import print_function
 
 import sys
-import pandas as pd
 import json
 import datetime
 
+from elasticsearch import Elasticsearch
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
 from pyspark.streaming import StreamingContext
@@ -13,6 +13,39 @@ from pyspark.ml.regression import LinearRegression
 from pyspark.ml.feature import VectorAssembler
 
 exchange_rates = []
+
+es_index = "eurusd"
+es_address = "http://elasticsearch:9200"
+es = Elasticsearch(hosts = es_address, verify_certs=False)
+
+response = es.indices.create(index = es_index)
+
+if 'acknowledged' in response:
+  if response['acknowledged'] == True:
+    print("INDEX MAPPING SUCCESS FOR INDEX:", response['index'])
+
+
+
+'''
+es_mapping = {
+  "mappings" : {
+		"properties" : 
+          {
+			
+			      "created_at" : {"type":"date", "format":"yyyy-MM-ddTHH:mm:ss"},
+			      "content" : {"type":"text", "fielddata": True}
+		
+		      }
+	  }
+}
+'''
+
+
+
+
+#es.indices.create(index=INDEXEURUSD)
+
+
 
 def linear_regression():
   training_data = spark.createDataFrame([(float(i),) for i in exchange_rates], ["exchange_rate"])
@@ -28,6 +61,9 @@ def linear_regression():
   predictions = lr_model.transform(prepared_data)
   #predictions.show()
   return predictions
+
+
+
 
 def elaborate(batch_df: DataFrame, batch_id: int):
 
@@ -58,6 +94,11 @@ def elaborate(batch_df: DataFrame, batch_id: int):
       prediction = row["prediction"]
       print("Exchange Rate: {}, Prediction: {}".format(exchange_rate, prediction))
       print("Valore intero: ", prediction)
+      
+      doc = {
+        "exchange_rate": exchange_rate,
+        "prediction": prediction
+      }
 
 
       
