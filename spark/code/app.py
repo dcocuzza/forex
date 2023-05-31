@@ -18,32 +18,27 @@ es_index = "eurusd"
 es_address = "http://elasticsearch:9200"
 es = Elasticsearch(hosts = es_address, verify_certs=False)
 
+'''
+es_mapping = {
+  "mappings" : {
+		"properties" : 
+          {
+			      "timestamp" : {"type":"date", "format":"yyyy-MM-ddTHH:mm:ss"},
+			      "content" : {"type":"tread_from_kafkaext", "fielddata": True},
+            "from_currency_name" : {"type":"text", "fielddata": True},
+            "to_currency_name" : {"type":"text", "fielddata": True},
+            "exchange_rate" : {"type":"float", "fielddata": True},
+            "prediction" : {"type":"float", "fielddata": True}
+		      }
+	  }
+}
+'''
 response = es.indices.create(index = es_index)
 
 if 'acknowledged' in response:
   if response['acknowledged'] == True:
     print("INDEX MAPPING SUCCESS FOR INDEX:", response['index'])
 
-
-
-'''
-es_mapping = {
-  "mappings" : {
-		"properties" : 
-          {
-			
-			      "created_at" : {"type":"date", "format":"yyyy-MM-ddTHH:mm:ss"},
-			      "content" : {"type":"text", "fielddata": True}
-		
-		      }
-	  }
-}
-'''
-
-
-
-
-#es.indices.create(index=INDEXEURUSD)
 
 
 
@@ -88,6 +83,8 @@ def elaborate(batch_df: DataFrame, batch_id: int):
     predictions = linear_regression()
     predictions.show()
 
+    id = 1;
+
     prediction_values = predictions.select("exchange_rate", "prediction").collect()
     for row in prediction_values:
       exchange_rate = row["exchange_rate"]
@@ -96,9 +93,16 @@ def elaborate(batch_df: DataFrame, batch_id: int):
       print("Valore intero: ", prediction)
       
       doc = {
+        "timestamp" : time_zone,
+        "from_currency_name" : from_currency_name,
+        "to_currency_name" : to_currency_name,
         "exchange_rate": exchange_rate,
         "prediction": prediction
       }
+      
+      risp = es.index(index = es_index, id = id, document = doc)
+      print(risp['result'])
+      id = id + 1
 
 
       
