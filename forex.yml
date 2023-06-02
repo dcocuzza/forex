@@ -114,12 +114,29 @@ services:
             - bootstrap.memory_lock=true
             - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
             - cluster.routing.allocation.disk.threshold_enabled=false
+        privileged: true
         ulimits:
             memlock:
                 soft: -1
                 hard: -1
         networks: 
-            - tap
+            tap:
+                ipv4_address: 10.0.100.51
+
+
+    kibana:
+        build: 
+            context: kibana
+            dockerfile: Dockerfile
+        container_name: kibana
+        hostname: kibana
+        ports:
+            - "5601:5601"
+        depends_on: 
+            - elasticsearch
+        networks: 
+            tap:
+                ipv4_address: 10.0.100.52
 
 
 

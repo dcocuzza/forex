@@ -1,0 +1,2 @@
+FROM  docker.elastic.co/kibana/kibana:8.7.1
+ADD kibana.yml /usr/share/kibana/config

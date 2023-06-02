@@ -13,6 +13,7 @@ from pyspark.ml.regression import LinearRegression
 from pyspark.ml.feature import VectorAssembler
 
 exchange_rates = []
+timestp = []
 
 es_index = "eurusd"
 es_address = "http://elasticsearch:9200"
@@ -43,8 +44,8 @@ if 'acknowledged' in response:
 
 
 def linear_regression():
-  training_data = spark.createDataFrame([(float(i),) for i in exchange_rates], ["exchange_rate"])
-  assembler = VectorAssembler(inputCols=["exchange_rate"], outputCol="features")
+  training_data = spark.createDataFrame([(float(last_refreshed), float(exchange_rate),) for last_refreshed, exchange_rate in zip(timestp, exchange_rates)], ["last_refreshed", "exchange_rate"])
+  assembler = VectorAssembler(inputCols=["last_refreshed"], outputCol="features")
   prepared_data = assembler.transform(training_data)
 
   lr = LinearRegression(featuresCol="features", labelCol="exchange_rate")
@@ -79,7 +80,14 @@ def elaborate(batch_df: DataFrame, batch_id: int):
     ask_price = api_response['Realtime Currency Exchange Rate']['9. Ask Price']
     #print(exchange_rate)
 
+
+    last_refreshed_numeric = last_refreshed[11:16]
+    last_refreshed_numeric = last_refreshed_numeric.replace(":", "")
+    last_refreshed_numeric = float(last_refreshed_numeric)
+
+    timestp.append(last_refreshed_numeric)
     exchange_rates.append(exchange_rate)
+    
     predictions = linear_regression()
     predictions.show()
 
@@ -93,7 +101,7 @@ def elaborate(batch_df: DataFrame, batch_id: int):
       print("Valore intero: ", prediction)
       
       doc = {
-        "timestamp" : time_zone,
+        "timestamp" : last_refreshed,
         "from_currency_name" : from_currency_name,
         "to_currency_name" : to_currency_name,
         "exchange_rate": exchange_rate,
