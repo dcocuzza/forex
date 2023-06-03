@@ -1,8 +1,8 @@
 # forex
 
-#Requirements
+# Requirements
 
-*Docker (Desktop on Windows)
-*Docker Compose
+* Docker (Desktop on Windows)
+* Docker Compose
 
-#Start Project
+# Start Project
