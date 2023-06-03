@@ -5,6 +5,7 @@ import json
 import datetime
 
 from elasticsearch import Elasticsearch
+from datetime import datetime
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
 from pyspark.streaming import StreamingContext
@@ -59,7 +60,7 @@ def linear_regression():
   return predictions
 
 
-
+id = 0
 
 def elaborate(batch_df: DataFrame, batch_id: int):
 
@@ -91,26 +92,32 @@ def elaborate(batch_df: DataFrame, batch_id: int):
     predictions = linear_regression()
     predictions.show()
 
-    id = 1;
+    
 
     prediction_values = predictions.select("exchange_rate", "prediction").collect()
     for row in prediction_values:
       exchange_rate = row["exchange_rate"]
       prediction = row["prediction"]
-      print("Exchange Rate: {}, Prediction: {}".format(exchange_rate, prediction))
-      print("Valore intero: ", prediction)
+
+    print("Exchange Rate: {}, Prediction: {}".format(exchange_rate, prediction))
+    print("Valore intero: ", prediction)
+
+    data = datetime.strptime(last_refreshed, "%Y-%m-%d %H:%M:%S")
       
-      doc = {
-        "timestamp" : last_refreshed,
-        "from_currency_name" : from_currency_name,
-        "to_currency_name" : to_currency_name,
-        "exchange_rate": exchange_rate,
-        "prediction": prediction
-      }
+    doc = {
+      "timestamp" : data,
+      "timestamp_numeric" : int(last_refreshed_numeric),
+      "from_currency_name" : from_currency_name,
+      "to_currency_name" : to_currency_name,
+      "exchange_rate": exchange_rate,
+      "prediction": prediction
+    }
+
+    global id
+    id = id + 1
       
-      risp = es.index(index = es_index, id = id, document = doc)
-      print(risp['result'])
-      id = id + 1
+    risp = es.index(index = es_index, id = id, document = doc)
+    print(risp['result'])
 
 
       
