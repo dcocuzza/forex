@@ -20,21 +20,6 @@ es_index = "eurusd"
 es_address = "http://elasticsearch:9200"
 es = Elasticsearch(hosts = es_address, verify_certs=False)
 
-'''
-es_mapping = {
-  "mappings" : {
-		"properties" : 
-          {
-			      "timestamp" : {"type":"date", "format":"yyyy-MM-ddTHH:mm:ss"},
-			      "content" : {"type":"tread_from_kafkaext", "fielddata": True},
-            "from_currency_name" : {"type":"text", "fielddata": True},
-            "to_currency_name" : {"type":"text", "fielddata": True},
-            "exchange_rate" : {"type":"float", "fielddata": True},
-            "prediction" : {"type":"float", "fielddata": True}
-		      }
-	  }
-}
-'''
 response = es.indices.create(index = es_index)
 
 if 'acknowledged' in response:
