@@ -20,7 +20,6 @@ services:
         container_name: kafkaServer
         environment:
             - KAFKA_ACTION=start-kafka
-            #- KAFKA_HEAP_OPTS=-Xmx256M
         ports:
             - 9092:9092
         networks: 
@@ -46,24 +45,12 @@ services:
             - kafkaserver
 
 
-#    kafka-ui:
-#        image: provectuslabs/kafka-ui:latest
-#        container_name: kafkaWebUI
-#        environment:
-#            - KAFKA_CLUSTERS_0_NAME=local
-#            - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafkaServer:9092
-#        ports: 
-#            - 8080:8080
-#        networks: 
-#            - tap
-#        depends_on:
-#            - kafkaserver
-
 
     logstash:
         build: 
             context: logstash
             dockerfile: Dockerfile
+        container_name: logstash
         networks: 
             - tap
         environment:
@@ -82,17 +69,15 @@ services:
             context: spark
             dockerfile: Dockerfile
         container_name: spark
-        #environment: 
-        #    - SPARK_ACTION=spark-submit-python
         ports:
             - 4040:4040
         networks:
           - tap
-        #command: codice.py org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.0
         restart: on-failure  
         depends_on:
           - zookeeper
           - kafkaserver
+          - logstash
         deploy:
           resources:
             limits:
@@ -147,6 +132,3 @@ networks:
         ipam:
             config:
                 - subnet: 10.0.100.1/24
-
-
-#     export KAFKA_HEAP_OPTS="-Xmx1G -Xms1G"
