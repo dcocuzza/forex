@@ -41,7 +41,6 @@ def linear_regression():
   print("Intercept: {}".format(lr_model.intercept))
 
   predictions = lr_model.transform(prepared_data)
-  #predictions.show()
   return predictions
 
 
