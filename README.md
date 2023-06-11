@@ -17,4 +17,4 @@
 4. To view data:  
     - Go to: ``` http://locahost:5601 ```    
     - At the home page click on: ``` Stack Management > Saved Object ```  
-    - Import this file: ``` kibana/export.ndjson ``` and ``` kibana/tempo.ndjson ```
+    - Import these file: ``` kibana/export.ndjson ``` and ``` kibana/tempo.ndjson ```
